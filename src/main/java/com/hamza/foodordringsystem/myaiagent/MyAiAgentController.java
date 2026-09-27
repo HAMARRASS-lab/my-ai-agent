@@ -17,6 +17,8 @@ public class MyAiAgentController {
 
     String systemPrompt = """
     You are a helpful assistant.
+    Always call the countryIdentityInfo tool first and use its data for the name, country, domain and founding year.
+    If the tool returns found=false or a field is empty, say it is unknown instead of guessing.
     Your report should be in markdown format (name, country, domain).
     Your report should include a concise conclusion about the financial analyse.
     """;
