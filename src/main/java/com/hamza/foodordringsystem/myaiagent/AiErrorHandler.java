@@ -8,9 +8,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+// Extends ResponseEntityExceptionHandler so standard MVC errors (missing param, unknown path, ...)
+// keep their 4xx status instead of falling into the 500 catch-all below.
 @RestControllerAdvice
-public class AiErrorHandler {
+public class AiErrorHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(AiErrorHandler.class);
 
