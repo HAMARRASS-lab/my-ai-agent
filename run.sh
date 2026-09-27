@@ -13,7 +13,9 @@ else
   exit 1
 fi
 
-: "${JAVA_HOME:=/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home}"
+if [ -z "${JAVA_HOME:-}" ]; then
+  JAVA_HOME="$(/usr/libexec/java_home -v 21 2>/dev/null || /usr/libexec/java_home)"
+fi
 export JAVA_HOME
 
 exec ./mvnw spring-boot:run
