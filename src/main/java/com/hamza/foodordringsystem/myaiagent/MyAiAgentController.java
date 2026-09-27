@@ -30,7 +30,7 @@ public class MyAiAgentController {
             throw new IllegalStateException("OPENAI_API_KEY is not set. Copy .env.example to .env, add your key, and start with ./run.sh");
         }
         this.chatClient = chatClient
-                .defaultToolCallbacks(FunctionToolCallback.builder("countryIdentityInfo", countryIdentityInfo)
+                .defaultTools(FunctionToolCallback.builder("countryIdentityInfo", countryIdentityInfo)
                         .description("Get identity information about a company: its name, country, industry domain and founding year")
                         .inputType(CountryIdentityInfo.Request.class)
                         .build())
