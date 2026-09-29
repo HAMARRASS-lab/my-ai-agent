@@ -3,141 +3,128 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Company Dossier</title>
+<title>Dossier Terminal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f4f1ea;
-    --bg-glow: #e9e2d2;
-    --panel: #fffdf8;
-    --border: #e2dccf;
-    --text: #1d1b16;
-    --muted: #6d675b;
-    --accent: #0f5c4d;
-    --accent-soft: #dcebe5;
-    --accent-text: #ffffff;
-    --danger: #b3261e;
-    --danger-soft: #f9e4e1;
-    --shadow: 0 1px 2px rgba(40, 32, 16, 0.06), 0 12px 32px -12px rgba(40, 32, 16, 0.18);
-    --serif: "Fraunces", Georgia, "Times New Roman", serif;
-    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #101312;
-      --bg-glow: #17211e;
-      --panel: #171b1a;
-      --border: #28302d;
-      --text: #ebe7de;
-      --muted: #9a978d;
-      --accent: #5fc3a6;
-      --accent-soft: #1d3a32;
-      --accent-text: #0b1f19;
-      --danger: #ff8a80;
-      --danger-soft: #3a1e1c;
-      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 40px -16px rgba(0, 0, 0, 0.6);
-    }
+    color-scheme: dark;
+    --bg: #07090b;
+    --panel: #0d1114;
+    --panel-2: #11171b;
+    --line: #1e272d;
+    --line-strong: #2c3940;
+    --text: #d7e0e4;
+    --muted: #6f7f88;
+    --green: #3dfc9a;
+    --green-dim: rgba(61, 252, 154, 0.12);
+    --amber: #ffb547;
+    --amber-dim: rgba(255, 181, 71, 0.12);
+    --red: #ff5f56;
+    --red-dim: rgba(255, 95, 86, 0.1);
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
   * { box-sizing: border-box; }
+  html, body { margin: 0; }
   body {
-    margin: 0;
     min-height: 100vh;
     background:
-      radial-gradient(1200px 500px at 50% -120px, var(--bg-glow), transparent 70%),
+      linear-gradient(rgba(61, 252, 154, 0.025) 1px, transparent 1px) 0 0 / 100% 28px,
+      radial-gradient(900px 400px at 50% -100px, rgba(61, 252, 154, 0.08), transparent 70%),
       var(--bg);
     color: var(--text);
-    font-family: var(--sans);
-    font-size: 16px;
+    font-family: var(--mono);
+    font-size: 14px;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap {
-    max-width: 780px;
+  ::selection { background: var(--green); color: var(--bg); }
+
+  .shell {
+    max-width: 960px;
     margin: 0 auto;
-    padding: 0 16px 80px;
+    padding: 24px 16px 48px;
+  }
+  .frame {
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    background: var(--panel);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 30px 80px -30px rgba(61, 252, 154, 0.15);
+    overflow: hidden;
   }
 
-  /* Header */
-  .topbar {
+  /* Title bar */
+  .titlebar {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 24px 0;
-    font-weight: 600;
-    letter-spacing: 0.01em;
+    gap: 14px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel-2);
+    font-size: 12px;
+    letter-spacing: 0.08em;
   }
-  .logo {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    background: var(--accent);
-    color: var(--accent-text);
-    display: grid;
-    place-items: center;
-  }
-  .topbar .tag {
-    margin-left: auto;
-    font-family: var(--mono);
-    font-size: 0.72rem;
-    font-weight: 500;
-    color: var(--muted);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 4px 10px;
-  }
-
-  /* Hero */
-  .hero {
-    padding: 48px 0 28px;
-    text-align: center;
-  }
-  .eyebrow {
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: var(--accent);
-    margin: 0 0 14px;
-  }
-  .hero h1 {
-    font-family: var(--serif);
-    font-weight: 400;
-    font-size: clamp(2.2rem, 6vw, 3.4rem);
-    line-height: 1.05;
-    letter-spacing: -0.02em;
-    margin: 0 0 14px;
-  }
-  .hero h1 em {
-    font-style: italic;
-    color: var(--accent);
-  }
-  .hero p {
-    color: var(--muted);
-    font-size: 1.05rem;
-    line-height: 1.5;
-    max-width: 480px;
-    margin: 0 auto;
-  }
-
-  /* Search */
-  form {
+  .brand {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 8px 8px 8px 18px;
-    box-shadow: var(--shadow);
+    font-weight: 600;
+    color: var(--green);
+  }
+  .brand svg { display: block; }
+  .titlebar .spacer { flex: 1; }
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+  }
+  .pulse {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  .status.busy .pulse { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+  .status.down .pulse { background: var(--red); box-shadow: 0 0 8px var(--red); animation: none; }
+  @keyframes pulse { 50% { opacity: 0.35; } }
+  .badge {
+    border: 1px solid var(--line-strong);
+    border-radius: 3px;
+    padding: 2px 7px;
+    color: var(--muted);
+  }
+  #clock { color: var(--muted); min-width: 64px; text-align: right; }
+
+  /* Command line */
+  .command {
+    padding: 22px 20px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .command-label {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: 4px;
+    background: var(--bg);
+    padding: 6px 6px 6px 14px;
     transition: border-color 0.15s, box-shadow 0.15s;
   }
   form:focus-within {
-    border-color: var(--accent);
-    box-shadow: var(--shadow), 0 0 0 4px var(--accent-soft);
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px var(--green-dim);
   }
-  form svg { color: var(--muted); flex-shrink: 0; }
+  .prompt { color: var(--green); font-weight: 600; user-select: none; }
   input[type="text"] {
     flex: 1;
     min-width: 0;
@@ -145,344 +132,318 @@
     background: transparent;
     color: var(--text);
     font: inherit;
-    font-size: 1.05rem;
-    padding: 10px 4px;
+    font-size: 16px;
+    padding: 9px 0;
+    caret-color: var(--green);
   }
   input[type="text"]:focus { outline: none; }
-  input::placeholder { color: var(--muted); opacity: 0.8; }
-  button {
-    font: inherit;
-    cursor: pointer;
-  }
-  .submit {
+  input::placeholder { color: var(--muted); }
+  button { font: inherit; cursor: pointer; }
+  .run {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
     gap: 8px;
-    min-width: 132px;
-    padding: 12px 20px;
-    border-radius: 11px;
-    border: none;
-    background: var(--accent);
-    color: var(--accent-text);
+    border: 1px solid var(--green);
+    background: var(--green);
+    color: var(--bg);
     font-weight: 600;
-    transition: transform 0.1s, opacity 0.15s;
+    letter-spacing: 0.1em;
+    border-radius: 3px;
+    padding: 9px 18px;
+    transition: background 0.15s, color 0.15s;
   }
-  .submit svg { color: inherit; }
-  .submit:hover { opacity: 0.92; }
-  .submit:active { transform: scale(0.98); }
-  .submit:disabled { opacity: 0.6; cursor: default; }
+  .run:hover { background: transparent; color: var(--green); }
+  .run:disabled {
+    background: var(--amber-dim);
+    border-color: var(--amber);
+    color: var(--amber);
+    cursor: default;
+  }
+  kbd {
+    font-family: var(--mono);
+    font-size: 10px;
+    border: 1px solid currentColor;
+    border-radius: 2px;
+    padding: 0 4px;
+    opacity: 0.7;
+  }
 
-  .chips {
+  .tickers {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-    margin: 18px 0 40px;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    font-size: 12px;
   }
-  .chips .label {
-    color: var(--muted);
-    font-size: 0.85rem;
-    align-self: center;
-    margin-right: 2px;
-  }
-  .chip {
-    border: 1px solid var(--border);
+  .tickers .label { color: var(--muted); margin-right: 4px; letter-spacing: 0.1em; }
+  .ticker {
+    border: 1px solid var(--line-strong);
     background: transparent;
     color: var(--text);
-    border-radius: 999px;
-    padding: 6px 14px;
-    font-size: 0.85rem;
-    transition: background 0.15s, border-color 0.15s;
+    border-radius: 3px;
+    padding: 4px 10px;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
   }
-  .chip:hover {
-    background: var(--accent-soft);
-    border-color: var(--accent);
-  }
+  .ticker b { color: var(--green); font-weight: 600; margin-right: 6px; }
+  .ticker:hover { border-color: var(--green); background: var(--green-dim); }
 
-  /* Result card */
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    box-shadow: var(--shadow);
-    overflow: hidden;
-    animation: rise 0.35s ease-out;
+  /* Output area */
+  #result { min-height: 320px; }
+  .idle {
+    padding: 56px 20px;
+    text-align: center;
+    color: var(--muted);
+    line-height: 1.8;
   }
-  @keyframes rise {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: none; }
+  .idle pre {
+    color: var(--green);
+    opacity: 0.8;
+    font-size: 11px;
+    line-height: 1.25;
+    margin: 0 0 18px;
+    display: inline-block;
+    text-align: left;
   }
-  .card-head {
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 15px;
+    background: var(--green);
+    vertical-align: -2px;
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .section-head {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 20px 24px;
-    border-bottom: 1px solid var(--border);
-  }
-  .monogram {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-family: var(--serif);
-    font-size: 1.35rem;
-    font-weight: 600;
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-  }
-  .card-head .meta { min-width: 0; }
-  .card-head .name {
-    font-family: var(--serif);
-    font-size: 1.3rem;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .card-head .sub {
-    font-family: var(--mono);
-    font-size: 0.72rem;
+    gap: 12px;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel-2);
+    font-size: 11px;
+    letter-spacing: 0.16em;
     color: var(--muted);
-    margin-top: 2px;
   }
+  .section-head .sym { color: var(--amber); font-weight: 600; }
+  .section-head .spacer { flex: 1; }
   .ghost {
-    margin-left: auto;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    border: 1px solid var(--border);
+    border: 1px solid var(--line-strong);
     background: transparent;
     color: var(--muted);
-    border-radius: 9px;
-    padding: 7px 12px;
-    font-size: 0.82rem;
-    flex-shrink: 0;
+    border-radius: 3px;
+    padding: 4px 10px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
   }
-  .ghost:hover { color: var(--text); border-color: var(--muted); }
-  .card-body { padding: 8px 28px 28px; }
+  .ghost:hover { color: var(--green); border-color: var(--green); }
 
-  /* Rendered markdown */
-  .dossier { line-height: 1.65; }
-  .dossier h1, .dossier h2, .dossier h3, .dossier h4 {
-    font-family: var(--serif);
-    font-weight: 600;
-    line-height: 1.25;
-    margin: 28px 0 10px;
+  /* Log (loading) */
+  .log {
+    padding: 18px 20px;
+    line-height: 2;
+    font-size: 13px;
   }
-  .dossier h1 { font-size: 1.6rem; }
-  .dossier h2 { font-size: 1.3rem; }
-  .dossier h3 { font-size: 1.1rem; }
-  .dossier h4 { font-size: 1rem; }
-  .dossier p { margin: 0 0 14px; }
-  .dossier ul, .dossier ol { margin: 0 0 16px; padding-left: 22px; }
-  .dossier li { margin: 4px 0; }
-  .dossier li::marker { color: var(--accent); }
-  .dossier strong { font-weight: 600; }
-  .dossier code {
+  .log .line { opacity: 0; animation: appear 0.2s forwards; }
+  .log .ts { color: var(--muted); margin-right: 10px; }
+  .log .ok { color: var(--green); }
+  .log .run-tag { color: var(--amber); }
+  .log .err { color: var(--red); }
+  @keyframes appear { to { opacity: 1; } }
+
+  /* Facts grid */
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    border-bottom: 1px solid var(--line);
+  }
+  .fact {
+    padding: 16px 20px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    margin: 0 -1px -1px 0;
+    min-width: 0;
+  }
+  .fact .k {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .fact .v {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+  .fact:first-child .v { color: var(--green); }
+
+  /* Report body */
+  .report {
+    padding: 8px 20px 26px;
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.7;
+    color: #c5d0d5;
+  }
+  .report h1, .report h2, .report h3, .report h4 {
     font-family: var(--mono);
-    font-size: 0.88em;
-    background: var(--accent-soft);
-    padding: 1px 6px;
-    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin: 24px 0 10px;
   }
-  .dossier hr {
-    border: none;
-    border-top: 1px solid var(--border);
-    margin: 24px 0;
+  .report h1::before, .report h2::before, .report h3::before, .report h4::before {
+    content: "## ";
+    color: var(--muted);
   }
-  .dossier blockquote {
-    margin: 0 0 16px;
-    padding: 12px 18px;
-    border-left: 3px solid var(--accent);
-    background: var(--accent-soft);
-    border-radius: 0 10px 10px 0;
+  .report p { margin: 0 0 12px; }
+  .report ul, .report ol { margin: 0 0 14px; padding-left: 20px; }
+  .report li { margin: 3px 0; }
+  .report li::marker { color: var(--green); }
+  .report strong { color: var(--text); font-weight: 600; }
+  .report code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    color: var(--green);
+    background: var(--green-dim);
+    padding: 1px 5px;
+    border-radius: 2px;
   }
-  .dossier blockquote p:last-child { margin: 0; }
-  .table-wrap { overflow-x: auto; margin: 0 0 18px; }
-  .dossier table {
+  .report hr { border: none; border-top: 1px dashed var(--line-strong); margin: 20px 0; }
+  .report blockquote {
+    margin: 0 0 14px;
+    padding: 10px 14px;
+    border-left: 2px solid var(--amber);
+    background: var(--amber-dim);
+  }
+  .report blockquote p:last-child { margin: 0; }
+  .table-wrap { overflow-x: auto; margin: 0 0 16px; }
+  .report table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.93rem;
+    font-family: var(--mono);
+    font-size: 13px;
   }
-  .dossier th, .dossier td {
+  .report th, .report td {
     text-align: left;
-    padding: 9px 12px;
-    border-bottom: 1px solid var(--border);
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--line);
   }
-  .dossier th {
-    font-family: var(--mono);
-    font-size: 0.72rem;
+  .report th {
+    font-size: 10px;
     font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-  }
-
-  /* Loading state */
-  .steps {
-    list-style: none;
-    margin: 0;
-    padding: 24px 28px 8px;
-  }
-  .steps li {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 6px 0;
-    color: var(--muted);
-    transition: color 0.2s;
-  }
-  .steps li.active, .steps li.done { color: var(--text); }
-  .dot {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    border: 2px solid var(--border);
-    flex-shrink: 0;
-    display: grid;
-    place-items: center;
-  }
-  .steps li.active .dot {
-    border-color: var(--accent-soft);
-    border-top-color: var(--accent);
-    animation: spin 0.8s linear infinite;
-  }
-  .steps li.done .dot {
-    border-color: var(--accent);
-    background: var(--accent);
-  }
-  .steps li.done .dot::after {
-    content: "";
-    width: 5px;
-    height: 8px;
-    border: solid var(--accent-text);
-    border-width: 0 2px 2px 0;
-    transform: translateY(-1px) rotate(45deg);
-  }
-  .skeleton { padding: 12px 28px 28px; }
-  .bar {
-    height: 12px;
-    border-radius: 6px;
-    margin: 12px 0;
-    background: linear-gradient(90deg, var(--border) 0%, var(--accent-soft) 50%, var(--border) 100%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s ease-in-out infinite;
-  }
-  @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid currentColor;
-    border-right-color: transparent;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-
-  /* Empty + error */
-  .empty {
-    text-align: center;
-    padding: 44px 24px;
-    color: var(--muted);
-    border: 1px dashed var(--border);
-    border-radius: 18px;
-  }
-  .empty svg { color: var(--accent); margin-bottom: 10px; }
-  .empty p { margin: 0; line-height: 1.5; }
-  .error-box {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    background: var(--danger-soft);
-    color: var(--danger);
-    border-radius: 14px;
-    padding: 16px 18px;
-    line-height: 1.5;
-    animation: rise 0.25s ease-out;
-  }
-  .error-box svg { flex-shrink: 0; margin-top: 2px; }
-
-  /* Recent searches */
-  .recent { margin-top: 36px; }
-  .recent h2 {
-    font-family: var(--mono);
-    font-size: 0.72rem;
-    font-weight: 500;
-    text-transform: uppercase;
     letter-spacing: 0.14em;
+    text-transform: uppercase;
     color: var(--muted);
-    margin: 0 0 10px;
   }
-  .recent .chips { justify-content: flex-start; margin: 0; }
+  .report tr:hover td { background: var(--panel-2); }
 
-  footer {
-    text-align: center;
+  .error {
+    margin: 20px;
+    padding: 14px 16px;
+    border: 1px solid var(--red);
+    background: var(--red-dim);
+    color: var(--red);
+    border-radius: 3px;
+    line-height: 1.6;
+  }
+
+  /* Footer status bar */
+  .statusbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    padding: 8px 16px;
+    border-top: 1px solid var(--line);
+    background: var(--panel-2);
+    font-size: 11px;
     color: var(--muted);
-    font-size: 0.8rem;
-    margin-top: 56px;
+    letter-spacing: 0.06em;
   }
+  .statusbar .spacer { flex: 1; }
+  .statusbar .recent-item {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--text);
+    font-size: 11px;
+    text-decoration: underline dotted var(--muted);
+    text-underline-offset: 3px;
+  }
+  .statusbar .recent-item:hover { color: var(--green); }
+  .disclaimer { text-align: center; color: var(--muted); font-size: 11px; margin-top: 16px; letter-spacing: 0.04em; }
 
-  @media (max-width: 560px) {
-    .hero { padding-top: 24px; }
-    .submit { min-width: 0; padding: 12px 14px; }
-    .submit .submit-label { display: none; }
-    .card-body { padding: 4px 18px 20px; }
-    .card-head { padding: 16px 18px; }
-    .steps, .skeleton { padding-left: 18px; padding-right: 18px; }
+  @media (max-width: 600px) {
+    .titlebar .badge, #clock { display: none; }
+    .run .run-label, .run kbd { display: none; }
+    .run { padding: 9px 12px; }
+    .fact { padding: 12px 16px; }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
+    .log .line { opacity: 1; }
   }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <header class="topbar">
-      <span class="logo" aria-hidden="true">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 4 5-6"/></svg>
-      </span>
-      Company Dossier
-      <span class="tag">AI agent · GPT-4o</span>
-    </header>
+  <div class="shell">
+    <div class="frame">
+      <header class="titlebar">
+        <span class="brand">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+          DOSSIER_AI
+        </span>
+        <span class="spacer"></span>
+        <span class="status" id="status"><span class="pulse"></span><span id="status-text">READY</span></span>
+        <span class="badge">GPT-4o</span>
+        <span id="clock"></span>
+      </header>
 
-    <section class="hero">
-      <p class="eyebrow">Financial research, instantly</p>
-      <h1>Know any company<br>in <em>seconds</em>.</h1>
-      <p>Type a company name and the agent pulls its identity from Wikidata, then writes a concise financial dossier.</p>
-    </section>
+      <section class="command">
+        <div class="command-label">COMPANY LOOKUP</div>
+        <form id="dossier-form" role="search">
+          <span class="prompt" aria-hidden="true">&gt;</span>
+          <input type="text" id="company" name="company" placeholder="enter company name…" autocomplete="off" spellcheck="false" aria-label="Company name" required>
+          <button type="submit" class="run" id="submit-btn"><span class="run-label">RUN</span> <kbd>↵</kbd></button>
+        </form>
+        <div class="tickers">
+          <span class="label">QUICK</span>
+          <button type="button" class="ticker" data-q="Renault"><b>RNO</b>Renault</button>
+          <button type="button" class="ticker" data-q="Apple"><b>AAPL</b>Apple</button>
+          <button type="button" class="ticker" data-q="LVMH"><b>MC</b>LVMH</button>
+          <button type="button" class="ticker" data-q="Toyota"><b>TM</b>Toyota</button>
+          <button type="button" class="ticker" data-q="Airbus"><b>AIR</b>Airbus</button>
+        </div>
+      </section>
 
-    <form id="dossier-form" role="search">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input type="text" id="company" name="company" placeholder="Search a company, e.g. Renault" autocomplete="off" aria-label="Company name" required>
-      <button type="submit" class="submit" id="submit-btn"></button>
-    </form>
+      <main id="result" aria-live="polite">
+        <div class="idle">
+<pre aria-hidden="true">  ▁▂▃▅▂▁▃▅▇▅▃▂▄▆█▆▄▂▃▅▇
+ ─────────────────────── </pre><br>
+          Awaiting query. Type a company and press <span style="color: var(--green)">RUN</span>.<br>
+          <span class="cursor"></span>
+        </div>
+      </main>
 
-    <div class="chips" id="suggestions">
-      <span class="label">Try</span>
-      <button type="button" class="chip">Renault</button>
-      <button type="button" class="chip">Apple</button>
-      <button type="button" class="chip">LVMH</button>
-      <button type="button" class="chip">Toyota</button>
-      <button type="button" class="chip">Airbus</button>
+      <footer class="statusbar">
+        <span>HISTORY:</span>
+        <span id="recent-list">—</span>
+        <span class="spacer"></span>
+        <span>SRC: WIKIDATA + LLM</span>
+        <span id="last-latency">LAT: —</span>
+      </footer>
     </div>
-
-    <main id="result" aria-live="polite">
-      <div class="empty">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h5"/></svg>
-        <p>Your dossier will appear here.<br>Pick a suggestion or search for any company.</p>
-      </div>
-    </main>
-
-    <section class="recent" id="recent" hidden>
-      <h2>Recent searches</h2>
-      <div class="chips" id="recent-list"></div>
-    </section>
-
-    <footer>Generated by AI — verify important figures before relying on them.</footer>
+    <p class="disclaimer">AI-generated analysis. Verify figures before making decisions.</p>
   </div>
 
   <script>
@@ -490,13 +451,21 @@
     const input = document.getElementById('company');
     const button = document.getElementById('submit-btn');
     const result = document.getElementById('result');
-    const recent = document.getElementById('recent');
+    const statusEl = document.getElementById('status');
+    const statusText = document.getElementById('status-text');
     const recentList = document.getElementById('recent-list');
+    const latencyEl = document.getElementById('last-latency');
+    const clock = document.getElementById('clock');
 
     const RECENT_KEY = 'dossier.recent';
-    const STEPS = ['Looking up company identity', 'Analyzing financial profile', 'Writing the dossier'];
-    const BUTTON_IDLE = '<span class="submit-label">Analyze</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>';
-    const BUTTON_BUSY = '<span class="spinner"></span><span class="submit-label">Analyzing</span>';
+    const STEPS = [
+      'resolving company identity via wikidata',
+      'fetching country / sector / founding year',
+      'running financial analysis model',
+      'formatting report',
+    ];
+    const BUTTON_IDLE = '<span class="run-label">RUN</span> <kbd>↵</kbd>';
+    const BUTTON_BUSY = '<span class="run-label">RUNNING…</span>';
 
     function escapeHtml(str) {
       return str
@@ -515,6 +484,30 @@
 
     function splitRow(line) {
       return line.replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+    }
+
+    function timestamp() {
+      return new Date().toLocaleTimeString([], { hour12: false });
+    }
+
+    function setStatus(state, text) {
+      statusEl.className = 'status' + (state ? ' ' + state : '');
+      statusText.textContent = text;
+    }
+
+    // Pull "**Key:** value" lines (bulleted or not) out of the report so they can be shown as a data grid.
+    function extractFacts(md) {
+      const facts = [];
+      const rest = [];
+      for (const line of md.split('\n')) {
+        const m = line.trim().match(/^(?:[-*+]\s+)?\*\*([^*:]+?)(?::\*\*|\*\*\s*:)\s*(.+)$/);
+        if (m && m[2].length < 120) {
+          facts.push([m[1].trim(), m[2].trim()]);
+        } else {
+          rest.push(line);
+        }
+      }
+      return { facts, rest: rest.join('\n') };
     }
 
     // Small markdown renderer: headings, lists, tables, quotes, rules, bold/italic/code.
@@ -583,104 +576,104 @@
     }
 
     function saveRecent(company) {
-      const list = [company, ...loadRecent().filter(c => c.toLowerCase() !== company.toLowerCase())].slice(0, 6);
+      const list = [company, ...loadRecent().filter(c => c.toLowerCase() !== company.toLowerCase())].slice(0, 5);
       try { localStorage.setItem(RECENT_KEY, JSON.stringify(list)); } catch { /* storage unavailable */ }
       renderRecent();
     }
 
     function renderRecent() {
       const list = loadRecent();
-      recent.hidden = list.length === 0;
-      recentList.innerHTML = list.map(c => `<button type="button" class="chip">${escapeHtml(c)}</button>`).join('');
+      recentList.innerHTML = list.length
+        ? list.map(c => `<button type="button" class="recent-item" data-q="${escapeHtml(c)}">${escapeHtml(c)}</button>`).join(' · ')
+        : '—';
     }
 
-    function cardHead(company, sub) {
-      return `
-        <div class="monogram">${escapeHtml(company.charAt(0).toUpperCase())}</div>
-        <div class="meta">
-          <div class="name">${escapeHtml(company)}</div>
-          <div class="sub">${sub}</div>
-        </div>`;
+    function logLine(log, tag, cls, text) {
+      const div = document.createElement('div');
+      div.className = 'line';
+      div.innerHTML = `<span class="ts">${timestamp()}</span><span class="${cls}">[${tag}]</span> ${escapeHtml(text)}`;
+      log.appendChild(div);
+      return div;
     }
 
     function showLoading(company) {
       result.innerHTML = `
-        <div class="card">
-          <div class="card-head">${cardHead(company, 'Preparing dossier…')}</div>
-          <ul class="steps">${STEPS.map(s => `<li><span class="dot"></span>${s}</li>`).join('')}</ul>
-          <div class="skeleton">
-            <div class="bar" style="width: 92%"></div>
-            <div class="bar" style="width: 78%"></div>
-            <div class="bar" style="width: 85%"></div>
-            <div class="bar" style="width: 60%"></div>
-          </div>
-        </div>`;
-
-      const items = result.querySelectorAll('.steps li');
+        <div class="section-head"><span class="sym">${escapeHtml(company.toUpperCase())}</span><span>QUERY IN PROGRESS</span></div>
+        <div class="log" id="log"></div>`;
+      const log = document.getElementById('log');
+      logLine(log, 'SYS', 'ok', `query accepted: "${company}"`);
       let step = 0;
-      items[0].classList.add('active');
-      // The backend answers in a single response, so advance the steps on a timer
-      // and hold on the last one until the response arrives.
+      let current = logLine(log, ' .. ', 'run-tag', STEPS[0] + '…');
+      // The backend answers in a single response, so advance the log on a timer
+      // and hold on the last step until the response arrives.
       return setInterval(() => {
-        if (step >= items.length - 1) return;
-        items[step].classList.replace('active', 'done');
+        if (step >= STEPS.length - 1) return;
+        current.querySelector('.run-tag').textContent = '[ OK ]';
+        current.querySelector('.run-tag').className = 'ok';
         step++;
-        items[step].classList.add('active');
-      }, 2200);
+        current = logLine(log, ' .. ', 'run-tag', STEPS[step] + '…');
+      }, 2000);
     }
 
     function showDossier(company, markdown, seconds) {
+      const { facts, rest } = extractFacts(markdown);
+      const factsHtml = facts.length
+        ? `<div class="facts">${facts.map(([k, v]) =>
+            `<div class="fact"><div class="k">${escapeHtml(k)}</div><div class="v">${inline(escapeHtml(v))}</div></div>`).join('')}</div>`
+        : '';
+
       result.innerHTML = `
-        <article class="card">
-          <div class="card-head">
-            ${cardHead(company, `Generated in ${seconds}s · ${new Date().toLocaleDateString()}`)}
-            <button type="button" class="ghost" id="copy-btn">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
-              <span>Copy</span>
-            </button>
-          </div>
-          <div class="card-body dossier">${renderMarkdown(markdown)}</div>
-        </article>`;
+        <div class="section-head">
+          <span class="sym">${escapeHtml(company.toUpperCase())}</span>
+          <span>DOSSIER · ${seconds}s</span>
+          <span class="spacer"></span>
+          <button type="button" class="ghost" id="copy-btn">COPY MD</button>
+        </div>
+        ${factsHtml}
+        <div class="report">${renderMarkdown(rest)}</div>`;
 
       const copyBtn = document.getElementById('copy-btn');
-      const copyLabel = copyBtn.querySelector('span');
       copyBtn.addEventListener('click', async () => {
         try {
           await navigator.clipboard.writeText(markdown);
-          copyLabel.textContent = 'Copied';
+          copyBtn.textContent = 'COPIED';
         } catch {
-          copyLabel.textContent = 'Copy failed';
+          copyBtn.textContent = 'COPY FAILED';
         }
-        setTimeout(() => { copyLabel.textContent = 'Copy'; }, 1800);
+        setTimeout(() => { copyBtn.textContent = 'COPY MD'; }, 1800);
       });
     }
 
     function showError(message) {
       result.innerHTML = `
-        <div class="error-box" role="alert">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-          <div>${escapeHtml(message)}</div>
-        </div>`;
+        <div class="section-head"><span class="sym" style="color: var(--red)">ERROR</span><span>REQUEST FAILED</span></div>
+        <div class="error" role="alert">[ERR] ${escapeHtml(message)}</div>`;
     }
 
     async function fetchDossier(company) {
       button.disabled = true;
       button.innerHTML = BUTTON_BUSY;
+      setStatus('busy', 'PROCESSING');
       const timer = showLoading(company);
       const started = performance.now();
 
       try {
         const res = await fetch('/financialAnalysis?company=' + encodeURIComponent(company));
         const text = await res.text();
+        const seconds = ((performance.now() - started) / 1000).toFixed(1);
+        latencyEl.textContent = `LAT: ${seconds}s`;
 
         if (!res.ok) {
+          setStatus('down', 'ERROR');
           showError(text || ('Request failed with status ' + res.status));
           return;
         }
 
-        showDossier(company, text, ((performance.now() - started) / 1000).toFixed(1));
+        setStatus('', 'READY');
+        showDossier(company, text, seconds);
         saveRecent(company);
       } catch (err) {
+        setStatus('down', 'OFFLINE');
         showError('Could not reach the server. Is it running?');
       } finally {
         clearInterval(timer);
@@ -701,14 +694,19 @@
       search(input.value);
     });
 
-    // Suggestion and recent-search chips both trigger a search.
+    // Ticker buttons and history entries both trigger a search.
     document.addEventListener('click', (e) => {
-      const chip = e.target.closest('.chip');
-      if (chip) search(chip.textContent);
+      const target = e.target.closest('[data-q]');
+      if (target) search(target.dataset.q);
     });
+
+    function tick() { clock.textContent = timestamp(); }
+    setInterval(tick, 1000);
+    tick();
 
     button.innerHTML = BUTTON_IDLE;
     renderRecent();
+    input.focus();
   </script>
 </body>
 </html>
