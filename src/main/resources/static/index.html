@@ -110,7 +110,7 @@
     color: var(--muted);
     margin-bottom: 10px;
   }
-  form {
+  #dossier-form {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -120,7 +120,7 @@
     padding: 6px 6px 6px 14px;
     transition: border-color 0.15s, box-shadow 0.15s;
   }
-  form:focus-within {
+  #dossier-form:focus-within {
     border-color: var(--green);
     box-shadow: 0 0 0 3px var(--green-dim);
   }
@@ -383,7 +383,90 @@
   .statusbar .recent-item:hover { color: var(--green); }
   .disclaimer { text-align: center; color: var(--muted); font-size: 11px; margin-top: 16px; letter-spacing: 0.04em; }
 
+  [hidden] { display: none !important; }
+
+  /* User box */
+  .user-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text);
+  }
+  .user-box::before { content: "USER:"; color: var(--muted); }
+  #user-name { color: var(--green); }
+
+  /* Login / register */
+  .auth {
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 36px 20px 44px;
+  }
+  .auth-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 1px solid var(--line-strong);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 22px;
+  }
+  .auth-tab {
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    padding: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    transition: background 0.15s, color 0.15s;
+  }
+  .auth-tab + .auth-tab { border-left: 1px solid var(--line-strong); }
+  .auth-tab:hover { color: var(--text); }
+  .auth-tab.active { background: var(--green-dim); color: var(--green); }
+  .auth-intro {
+    color: var(--muted);
+    margin: 0 0 20px;
+    line-height: 1.6;
+  }
+  .auth-intro::before { content: "// "; color: var(--line-strong); }
+  .field { display: block; margin-bottom: 14px; }
+  .field span {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%;
+    border: 1px solid var(--line-strong);
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+    font-size: 15px;
+    padding: 11px 12px;
+    caret-color: var(--green);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field input:focus {
+    outline: none;
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px var(--green-dim);
+  }
+  .field .hint { margin: 6px 0 0; font-size: 11px; color: var(--muted); letter-spacing: 0.02em; }
+  .auth-error {
+    border: 1px solid var(--red);
+    background: var(--red-dim);
+    color: var(--red);
+    border-radius: 3px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+  .auth-submit { width: 100%; justify-content: center; margin-top: 6px; }
+
   @media (max-width: 600px) {
+    .user-box::before { content: none; }
     .titlebar .badge, #clock { display: none; }
     .run .run-label, .run kbd { display: none; }
     .run { padding: 9px 12px; }
@@ -407,7 +490,32 @@
         <span class="status" id="status"><span class="pulse"></span><span id="status-text">READY</span></span>
         <span class="badge">GPT-4o</span>
         <span id="clock"></span>
+        <span class="user-box" id="user-box" hidden>
+          <span id="user-name"></span>
+          <button type="button" class="ghost" id="logout-btn">LOGOUT</button>
+        </span>
       </header>
+
+      <section class="auth" id="auth-view" hidden>
+        <div class="auth-tabs" role="tablist">
+          <button type="button" class="auth-tab active" data-mode="login" role="tab">LOGIN</button>
+          <button type="button" class="auth-tab" data-mode="register" role="tab">REGISTER</button>
+        </div>
+        <form id="auth-form" novalidate>
+          <p class="auth-intro" id="auth-intro"></p>
+          <label class="field" data-for="register"><span>FULL NAME</span><input name="fullName" autocomplete="name" maxlength="100"></label>
+          <label class="field" data-for="register"><span>EMAIL</span><input name="email" type="email" autocomplete="email"></label>
+          <label class="field" data-for="register"><span>USERNAME</span><input name="username" autocomplete="username" maxlength="30" spellcheck="false">
+            <p class="hint">3-30 chars: letters, digits, . _ -</p></label>
+          <label class="field" data-for="login"><span>USERNAME OR EMAIL</span><input name="login" autocomplete="username" spellcheck="false"></label>
+          <label class="field"><span>PASSWORD</span><input name="password" type="password">
+            <p class="hint" data-for="register">At least 8 characters.</p></label>
+          <div class="auth-error" id="auth-error" role="alert" hidden></div>
+          <button type="submit" class="run auth-submit" id="auth-submit"></button>
+        </form>
+      </section>
+
+      <div id="app-view" hidden>
 
       <section class="command">
         <div class="command-label">COMPANY LOOKUP</div>
@@ -434,6 +542,7 @@
           <span class="cursor"></span>
         </div>
       </main>
+      </div>
 
       <footer class="statusbar">
         <span>HISTORY:</span>
@@ -456,6 +565,16 @@
     const recentList = document.getElementById('recent-list');
     const latencyEl = document.getElementById('last-latency');
     const clock = document.getElementById('clock');
+
+    const authView = document.getElementById('auth-view');
+    const appView = document.getElementById('app-view');
+    const authForm = document.getElementById('auth-form');
+    const authIntro = document.getElementById('auth-intro');
+    const authError = document.getElementById('auth-error');
+    const authSubmit = document.getElementById('auth-submit');
+    const userBox = document.getElementById('user-box');
+    const userName = document.getElementById('user-name');
+    const logoutBtn = document.getElementById('logout-btn');
 
     const RECENT_KEY = 'dossier.recent';
     const STEPS = [
@@ -663,6 +782,11 @@
         const seconds = ((performance.now() - started) / 1000).toFixed(1);
         latencyEl.textContent = `LAT: ${seconds}s`;
 
+        if (res.status === 401) {
+          showAuth('Your session has expired. Please log in again.');
+          return;
+        }
+
         if (!res.ok) {
           setStatus('down', 'ERROR');
           showError(text || ('Request failed with status ' + res.status));
@@ -704,9 +828,115 @@
     setInterval(tick, 1000);
     tick();
 
-    button.innerHTML = BUTTON_IDLE;
-    renderRecent();
-    input.focus();
+    // --- Login / register ---
+
+    const AUTH_MODES = {
+      login: { intro: 'Log in to access the dossier terminal.', submit: 'LOGIN', password: 'current-password' },
+      register: { intro: 'Create a profile to start analyzing companies.', submit: 'CREATE PROFILE', password: 'new-password' },
+    };
+    let authMode = 'login';
+
+    function setAuthMode(mode) {
+      authMode = mode;
+      document.querySelectorAll('.auth-tab').forEach(tab => {
+        const active = tab.dataset.mode === mode;
+        tab.classList.toggle('active', active);
+        tab.setAttribute('aria-selected', active);
+      });
+      authForm.querySelectorAll('[data-for]').forEach(el => { el.hidden = el.dataset.for !== mode; });
+      authIntro.textContent = AUTH_MODES[mode].intro;
+      authSubmit.textContent = AUTH_MODES[mode].submit;
+      authForm.elements.password.autocomplete = AUTH_MODES[mode].password;
+      authError.hidden = true;
+      focusFirstField();
+    }
+
+    function focusFirstField() {
+      const first = [...authForm.querySelectorAll('input')].find(el => !el.closest('[hidden]'));
+      if (first) first.focus();
+    }
+
+    function showAuthError(message) {
+      authError.textContent = message;
+      authError.hidden = false;
+    }
+
+    function showAuth(message) {
+      appView.hidden = true;
+      userBox.hidden = true;
+      authView.hidden = false;
+      setStatus('down', 'LOCKED');
+      authForm.elements.password.value = '';
+      if (message) showAuthError(message); else authError.hidden = true;
+      focusFirstField();
+    }
+
+    function showApp(user) {
+      authView.hidden = true;
+      appView.hidden = false;
+      userBox.hidden = false;
+      userName.textContent = user.username;
+      userName.title = `${user.fullName} <${user.email}>`;
+      setStatus('', 'READY');
+      input.focus();
+    }
+
+    // Spring returns validation errors as ProblemDetail JSON; fall back to plain text.
+    async function errorMessage(res) {
+      const text = await res.text();
+      try { return JSON.parse(text).detail || text; } catch { return text || `Request failed (${res.status})`; }
+    }
+
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const f = authForm.elements;
+      const body = authMode === 'login'
+        ? { login: f.login.value.trim(), password: f.password.value }
+        : { fullName: f.fullName.value.trim(), email: f.email.value.trim(), username: f.username.value.trim(), password: f.password.value };
+
+      authSubmit.disabled = true;
+      authSubmit.textContent = authMode === 'login' ? 'LOGGING IN…' : 'CREATING…';
+      try {
+        const res = await fetch(`/api/auth/${authMode}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          showAuthError(await errorMessage(res));
+          return;
+        }
+        authForm.reset();
+        showApp(await res.json());
+      } catch {
+        showAuthError('Could not reach the server. Is it running?');
+      } finally {
+        authSubmit.disabled = false;
+        authSubmit.textContent = AUTH_MODES[authMode].submit;
+      }
+    });
+
+    document.querySelectorAll('.auth-tab').forEach(tab =>
+      tab.addEventListener('click', () => setAuthMode(tab.dataset.mode)));
+
+    logoutBtn.addEventListener('click', async () => {
+      try { await fetch('/api/auth/logout', { method: 'POST' }); } catch { /* logged out locally anyway */ }
+      setAuthMode('login');
+      showAuth();
+    });
+
+    async function init() {
+      button.innerHTML = BUTTON_IDLE;
+      renderRecent();
+      setAuthMode('login');
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) { showApp(await res.json()); return; }
+      } catch { /* fall through to the login screen */ }
+      showAuth();
+    }
+
+    init();
   </script>
 </body>
 </html>
