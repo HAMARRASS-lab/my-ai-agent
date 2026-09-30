@@ -1,5 +1,6 @@
 package com.hamza.foodordringsystem.myaiagent;
 
+import com.hamza.foodordringsystem.myaiagent.auth.AuthController;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -24,7 +25,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = "spring.ai.openai.api-key=test-key")
+@SpringBootTest(properties = {"spring.ai.openai.api-key=test-key", "spring.datasource.url=jdbc:h2:mem:test"})
 @AutoConfigureMockMvc
 class MyAiAgentControllerTests {
 
@@ -40,7 +41,7 @@ class MyAiAgentControllerTests {
         when(chatModel.call(any(Prompt.class)))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("# Renault report")))));
 
-        mockMvc.perform(get("/financialAnalysis").param("company", "Renault"))
+        mockMvc.perform(get("/financialAnalysis").param("company", "Renault").sessionAttr(AuthController.SESSION_USER_ID, 1L))
                 .andExpect(status().isOk())
                 .andExpect(content().string("# Renault report"));
 
@@ -53,8 +54,14 @@ class MyAiAgentControllerTests {
 
     @Test
     void missingCompanyReturnsBadRequest() throws Exception {
-        mockMvc.perform(get("/financialAnalysis"))
+        mockMvc.perform(get("/financialAnalysis").sessionAttr(AuthController.SESSION_USER_ID, 1L))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void financialAnalysisRequiresLogin() throws Exception {
+        mockMvc.perform(get("/financialAnalysis").param("company", "Renault"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

@@ -36,3 +36,9 @@ build/
 .env
 .env.*
 !.env.example
+
+### Local database ###
+data/
+
+### macOS ###
+.DS_Store
