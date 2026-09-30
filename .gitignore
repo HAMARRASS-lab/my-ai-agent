@@ -39,3 +39,6 @@ build/
 
 ### Local database ###
 data/
+
+### macOS ###
+.DS_Store
