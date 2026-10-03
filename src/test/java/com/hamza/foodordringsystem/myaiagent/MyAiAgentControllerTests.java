@@ -36,7 +36,7 @@ class MyAiAgentControllerTests {
     ChatModel chatModel;
 
     @Test
-    void financialAnalysisSendsCompanyIdentityToolToModel() throws Exception {
+    void financialAnalysisSendsIdentityAndFinancialsToolsToModel() throws Exception {
         when(chatModel.getOptions()).thenReturn(ToolCallingChatOptions.builder().build());
         when(chatModel.call(any(Prompt.class)))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("# Renault report")))));
@@ -49,7 +49,7 @@ class MyAiAgentControllerTests {
         verify(chatModel).call(prompt.capture());
         assertThat(((ToolCallingChatOptions) prompt.getValue().getOptions()).getToolCallbacks())
                 .extracting(tool -> tool.getToolDefinition().name())
-                .containsExactly("countryIdentityInfo");
+                .containsExactly("countryIdentityInfo", "companyFinancials");
     }
 
     @Test
