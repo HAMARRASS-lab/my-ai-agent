@@ -189,6 +189,33 @@
   }
   .ticker b { color: var(--green); font-weight: 600; margin-right: 6px; }
   .ticker:hover { border-color: var(--green); background: var(--green-dim); }
+  #history-btn { margin-left: auto; }
+
+  /* Saved reports list */
+  .history-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px 0 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .history-row:hover { background: var(--panel-2); }
+  .history-open {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    padding: 13px 20px;
+    text-align: left;
+  }
+  .history-open b { color: var(--green); font-weight: 500; overflow-wrap: anywhere; }
+  .history-open span { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .history-open:hover b { text-decoration: underline; text-underline-offset: 3px; }
+  .ghost.danger:hover { color: var(--red); border-color: var(--red); }
 
   /* Output area */
   #result { min-height: 320px; }
@@ -531,6 +558,7 @@
           <button type="button" class="ticker" data-q="LVMH"><b>MC</b>LVMH</button>
           <button type="button" class="ticker" data-q="Toyota"><b>TM</b>Toyota</button>
           <button type="button" class="ticker" data-q="Airbus"><b>AIR</b>Airbus</button>
+          <button type="button" class="ghost" id="history-btn">HISTORY</button>
         </div>
       </section>
 
@@ -576,7 +604,6 @@
     const userName = document.getElementById('user-name');
     const logoutBtn = document.getElementById('logout-btn');
 
-    const RECENT_KEY = 'dossier.recent';
     const STEPS = [
       'resolving company identity via wikidata',
       'fetching country / sector / founding year',
@@ -692,21 +719,75 @@
       return html;
     }
 
-    function loadRecent() {
-      try { return JSON.parse(localStorage.getItem(RECENT_KEY)) || []; } catch { return []; }
+    // --- Saved reports (stored on the server per user) ---
+
+    let savedReports = [];
+
+    function formatDate(iso) {
+      return new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
     }
 
-    function saveRecent(company) {
-      const list = [company, ...loadRecent().filter(c => c.toLowerCase() !== company.toLowerCase())].slice(0, 5);
-      try { localStorage.setItem(RECENT_KEY, JSON.stringify(list)); } catch { /* storage unavailable */ }
+    async function loadHistory() {
+      try {
+        const res = await fetch('/api/reports');
+        savedReports = res.ok ? await res.json() : [];
+      } catch {
+        savedReports = [];
+      }
       renderRecent();
     }
 
+    // Footer shows the last 5 distinct companies; each opens its newest saved report.
     function renderRecent() {
-      const list = loadRecent();
-      recentList.innerHTML = list.length
-        ? list.map(c => `<button type="button" class="recent-item" data-q="${escapeHtml(c)}">${escapeHtml(c)}</button>`).join(' · ')
+      const seen = new Set();
+      const latest = savedReports.filter(r => {
+        const key = r.company.toLowerCase();
+        return !seen.has(key) && seen.add(key);
+      }).slice(0, 5);
+      recentList.innerHTML = latest.length
+        ? latest.map(r => `<button type="button" class="recent-item" data-report="${r.id}" title="Saved ${escapeHtml(formatDate(r.createdAt))}">${escapeHtml(r.company)}</button>`).join(' · ')
         : '—';
+    }
+
+    function showHistory() {
+      const rows = savedReports.map(r => `
+        <div class="history-row">
+          <button type="button" class="history-open" data-report="${r.id}"><b>${escapeHtml(r.company)}</b><span>${escapeHtml(formatDate(r.createdAt))}</span></button>
+          <button type="button" class="ghost" data-q="${escapeHtml(r.company)}">RE-RUN</button>
+          <button type="button" class="ghost danger" data-delete="${r.id}">DELETE</button>
+        </div>`).join('');
+      result.innerHTML = `
+        <div class="section-head"><span class="sym">HISTORY</span><span>${savedReports.length} SAVED REPORT${savedReports.length === 1 ? '' : 'S'}</span></div>
+        ${rows || '<div class="idle">No saved reports yet. Run a company lookup and it will be saved here.</div>'}`;
+    }
+
+    async function openReport(id) {
+      if (button.disabled) return;
+      try {
+        const res = await fetch(`/api/reports/${id}`);
+        if (res.status === 401) { showAuth('Your session has expired. Please log in again.'); return; }
+        if (!res.ok) { showError(await errorMessage(res)); return; }
+        const report = await res.json();
+        input.value = report.company;
+        showDossier(report.company, report.markdown, `SAVED · ${formatDate(report.createdAt)}`, true);
+      } catch {
+        showError('Could not reach the server. Is it running?');
+      }
+    }
+
+    async function deleteReport(id) {
+      const report = savedReports.find(r => String(r.id) === String(id));
+      if (!confirm(`Delete the saved report for ${report ? report.company : 'this company'}?`)) return;
+      try {
+        const res = await fetch(`/api/reports/${id}`, { method: 'DELETE' });
+        if (res.status === 401) { showAuth('Your session has expired. Please log in again.'); return; }
+        if (!res.ok && res.status !== 404) { showError(await errorMessage(res)); return; }
+      } catch {
+        showError('Could not reach the server. Is it running?');
+        return;
+      }
+      await loadHistory();
+      showHistory();
     }
 
     function logLine(log, tag, cls, text) {
@@ -736,7 +817,8 @@
       }, 2000);
     }
 
-    function showDossier(company, markdown, seconds) {
+    // label goes in the header (run time or saved date); saved reports also get a RE-RUN button for fresh numbers.
+    function showDossier(company, markdown, label, saved) {
       const { facts, rest } = extractFacts(markdown);
       const factsHtml = facts.length
         ? `<div class="facts">${facts.map(([k, v]) =>
@@ -746,8 +828,9 @@
       result.innerHTML = `
         <div class="section-head">
           <span class="sym">${escapeHtml(company.toUpperCase())}</span>
-          <span>DOSSIER · ${seconds}s</span>
+          <span>DOSSIER · ${escapeHtml(label)}</span>
           <span class="spacer"></span>
+          ${saved ? `<button type="button" class="ghost" data-q="${escapeHtml(company)}">RE-RUN</button>` : ''}
           <button type="button" class="ghost" id="copy-btn">COPY MD</button>
         </div>
         ${factsHtml}
@@ -796,8 +879,8 @@
         }
 
         setStatus('', 'READY');
-        showDossier(company, text, seconds);
-        saveRecent(company);
+        showDossier(company, text, `${seconds}s`, false);
+        loadHistory();
       } catch (err) {
         setStatus('down', 'OFFLINE');
         showError('Could not reach the server. Is it running?');
@@ -820,10 +903,17 @@
       search(input.value);
     });
 
-    // Ticker buttons and history entries both trigger a search.
+    // Tickers and RE-RUN buttons trigger a search; history entries open or delete a saved report.
     document.addEventListener('click', (e) => {
-      const target = e.target.closest('[data-q]');
-      if (target) search(target.dataset.q);
+      const target = e.target.closest('[data-q], [data-report], [data-delete]');
+      if (!target) return;
+      if (target.dataset.q) search(target.dataset.q);
+      else if (target.dataset.report) openReport(target.dataset.report);
+      else deleteReport(target.dataset.delete);
+    });
+
+    document.getElementById('history-btn').addEventListener('click', () => {
+      if (!button.disabled) showHistory();
     });
 
     function tick() { clock.textContent = timestamp(); }
@@ -881,6 +971,7 @@
       userName.title = `${user.fullName} <${user.email}>`;
       setStatus('', 'READY');
       input.focus();
+      loadHistory();
     }
 
     // Spring returns validation errors as ProblemDetail JSON; fall back to plain text.
@@ -923,13 +1014,16 @@
 
     logoutBtn.addEventListener('click', async () => {
       try { await fetch('/api/auth/logout', { method: 'POST' }); } catch { /* logged out locally anyway */ }
+      savedReports = [];
+      renderRecent();
       setAuthMode('login');
       showAuth();
     });
 
     async function init() {
       button.innerHTML = BUTTON_IDLE;
-      renderRecent();
+      // History used to live in localStorage; it is per user on the server now.
+      try { localStorage.removeItem('dossier.recent'); } catch { /* storage unavailable */ }
       setAuthMode('login');
       try {
         const res = await fetch('/api/auth/me');

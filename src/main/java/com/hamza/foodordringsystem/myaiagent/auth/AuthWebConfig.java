@@ -10,6 +10,6 @@ public class AuthWebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new LoginRequiredInterceptor())
-                .addPathPatterns("/financialAnalysis");
+                .addPathPatterns("/financialAnalysis", "/api/reports", "/api/reports/**");
     }
 }
