@@ -1,20 +1,30 @@
 package com.hamza.foodordringsystem.myaiagent;
 
+import com.hamza.foodordringsystem.myaiagent.auth.AuthController;
+import com.hamza.foodordringsystem.myaiagent.reports.SavedReport;
+import com.hamza.foodordringsystem.myaiagent.reports.SavedReportRepository;
 import com.hamza.foodordringsystem.myaiagent.tools.CompanyFinancials;
 import com.hamza.foodordringsystem.myaiagent.tools.CountryIdentityInfo;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.SessionAttribute;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 public class MyAiAgentController {
 
+    public static final String REPORT_ID_HEADER = "X-Report-Id";
+
     private final ChatClient chatClient;
+    private final SavedReportRepository reports;
 
     String systemPrompt = """
     You are a financial analyst assistant.
@@ -41,8 +51,9 @@ public class MyAiAgentController {
     """;
 
     public MyAiAgentController(ChatClient.Builder chatClient, CountryIdentityInfo countryIdentityInfo,
-                               CompanyFinancials companyFinancials,
+                               CompanyFinancials companyFinancials, SavedReportRepository reports,
                                @Value("${spring.ai.openai.api-key:}") String apiKey) {
+        this.reports = reports;
         // Spring AI starts fine without a key and only fails on the first request, so fail at startup instead.
         if (!StringUtils.hasText(apiKey)) {
             throw new IllegalStateException("OPENAI_API_KEY is not set. Copy .env.example to .env, add your key, and start with ./run.sh");
@@ -63,13 +74,26 @@ public class MyAiAgentController {
 //
 
     @GetMapping(value = "/financialAnalysis", produces = MediaType.TEXT_MARKDOWN_VALUE)
-    public String askAgent(@RequestParam String company) {
+    public ResponseEntity<String> askAgent(@RequestParam String company,
+                                           @SessionAttribute(AuthController.SESSION_USER_ID) Long userId) {
         System.out.println("askAgent");
+        company = company.trim();
+        // Checked before the AI call so a bad name never costs a request.
+        if (!StringUtils.hasText(company) || company.length() > 100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Company name is required (max 100 characters).");
+        }
 
-        return chatClient.prompt()
+        String report = chatClient.prompt()
                 .system(systemPrompt)
                 .user("Company Name :" + company)
                 .call().content();
+
+        if (!StringUtils.hasText(report)) {
+            return ResponseEntity.ok("");
+        }
+        // The id lets the UI link the dossier it just showed to the saved copy in the history.
+        SavedReport saved = reports.save(new SavedReport(userId, company, report));
+        return ResponseEntity.ok().header(REPORT_ID_HEADER, saved.getId().toString()).body(report);
     }
 
 
