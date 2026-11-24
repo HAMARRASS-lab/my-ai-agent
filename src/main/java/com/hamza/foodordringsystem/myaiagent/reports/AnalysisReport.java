@@ -5,14 +5,16 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
 
-// A generated dossier, kept so the user can reopen it later without another AI call.
+// A financial analysis generated for a user, kept so it can be reopened without calling the model again.
 @Entity
-@Table(name = "saved_report")
-public class SavedReport {
+@Table(name = "analysis_report", indexes = @Index(name = "idx_report_user", columnList = "userId, createdAt"))
+public class AnalysisReport {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,22 +23,27 @@ public class SavedReport {
     @Column(nullable = false)
     private Long userId;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 200)
     private String company;
 
-    @Column(nullable = false, length = 50_000)
-    private String markdown;
+    @Lob
+    @Column(nullable = false)
+    private String content;
+
+    @Column(nullable = false)
+    private long durationMs;
 
     @Column(nullable = false)
     private Instant createdAt;
 
-    protected SavedReport() {
+    protected AnalysisReport() {
     }
 
-    public SavedReport(Long userId, String company, String markdown) {
+    public AnalysisReport(Long userId, String company, String content, long durationMs) {
         this.userId = userId;
         this.company = company;
-        this.markdown = markdown;
+        this.content = content;
+        this.durationMs = durationMs;
         this.createdAt = Instant.now();
     }
 
@@ -52,8 +59,12 @@ public class SavedReport {
         return company;
     }
 
-    public String getMarkdown() {
-        return markdown;
+    public String getContent() {
+        return content;
+    }
+
+    public long getDurationMs() {
+        return durationMs;
     }
 
     public Instant getCreatedAt() {
