@@ -1,8 +1,8 @@
 package com.hamza.foodordringsystem.myaiagent;
 
 import com.hamza.foodordringsystem.myaiagent.auth.AuthController;
-import com.hamza.foodordringsystem.myaiagent.reports.SavedReport;
-import com.hamza.foodordringsystem.myaiagent.reports.SavedReportRepository;
+import com.hamza.foodordringsystem.myaiagent.reports.AnalysisReport;
+import com.hamza.foodordringsystem.myaiagent.reports.AnalysisReportRepository;
 import com.hamza.foodordringsystem.myaiagent.tools.CompanyFinancials;
 import com.hamza.foodordringsystem.myaiagent.tools.CountryIdentityInfo;
 import org.springframework.ai.chat.client.ChatClient;
@@ -21,10 +21,11 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 public class MyAiAgentController {
 
+    // Lets the frontend link the report it just received to its saved copy.
     public static final String REPORT_ID_HEADER = "X-Report-Id";
 
     private final ChatClient chatClient;
-    private final SavedReportRepository reports;
+    private final AnalysisReportRepository reports;
 
     String systemPrompt = """
     You are a financial analyst assistant.
@@ -51,13 +52,13 @@ public class MyAiAgentController {
     """;
 
     public MyAiAgentController(ChatClient.Builder chatClient, CountryIdentityInfo countryIdentityInfo,
-                               CompanyFinancials companyFinancials, SavedReportRepository reports,
+                               CompanyFinancials companyFinancials, AnalysisReportRepository reports,
                                @Value("${spring.ai.openai.api-key:}") String apiKey) {
-        this.reports = reports;
         // Spring AI starts fine without a key and only fails on the first request, so fail at startup instead.
         if (!StringUtils.hasText(apiKey)) {
             throw new IllegalStateException("OPENAI_API_KEY is not set. Copy .env.example to .env, add your key, and start with ./run.sh");
         }
+        this.reports = reports;
         this.chatClient = chatClient
                 .defaultTools(FunctionToolCallback.builder("countryIdentityInfo", countryIdentityInfo)
                         .description("Get identity information about a company: its name, country, industry domain and founding year")
@@ -71,30 +72,28 @@ public class MyAiAgentController {
                         .build())
                 .build();
     }
-//
 
+    // Every generated report is saved for the logged-in user (see ReportController).
     @GetMapping(value = "/financialAnalysis", produces = MediaType.TEXT_MARKDOWN_VALUE)
     public ResponseEntity<String> askAgent(@RequestParam String company,
                                            @SessionAttribute(AuthController.SESSION_USER_ID) Long userId) {
-        System.out.println("askAgent");
-        company = company.trim();
-        // Checked before the AI call so a bad name never costs a request.
-        if (!StringUtils.hasText(company) || company.length() > 100) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Company name is required (max 100 characters).");
+        String name = company.trim();
+        if (name.isEmpty() || name.length() > 200) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Company name must be 1-200 characters.");
         }
 
-        String report = chatClient.prompt()
+        long started = System.currentTimeMillis();
+        String content = chatClient.prompt()
                 .system(systemPrompt)
-                .user("Company Name :" + company)
+                .user("Company Name :" + name)
                 .call().content();
-
-        if (!StringUtils.hasText(report)) {
-            return ResponseEntity.ok("");
+        if (!StringUtils.hasText(content)) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "The AI assistant returned an empty report. Please try again.");
         }
-        // The id lets the UI link the dossier it just showed to the saved copy in the history.
-        SavedReport saved = reports.save(new SavedReport(userId, company, report));
-        return ResponseEntity.ok().header(REPORT_ID_HEADER, saved.getId().toString()).body(report);
+
+        AnalysisReport saved = reports.save(new AnalysisReport(userId, name, content, System.currentTimeMillis() - started));
+        return ResponseEntity.ok()
+                .header(REPORT_ID_HEADER, saved.getId().toString())
+                .body(content);
     }
-
-
 }

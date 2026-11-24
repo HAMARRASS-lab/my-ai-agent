@@ -1,8 +1,8 @@
 package com.hamza.foodordringsystem.myaiagent;
 
 import com.hamza.foodordringsystem.myaiagent.auth.AuthController;
-import com.hamza.foodordringsystem.myaiagent.reports.SavedReport;
-import com.hamza.foodordringsystem.myaiagent.reports.SavedReportRepository;
+import com.hamza.foodordringsystem.myaiagent.reports.AnalysisReport;
+import com.hamza.foodordringsystem.myaiagent.reports.AnalysisReportRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -37,7 +37,7 @@ class MyAiAgentControllerTests {
     MockMvc mockMvc;
 
     @Autowired
-    SavedReportRepository reports;
+    AnalysisReportRepository reports;
 
     @MockitoBean
     ChatModel chatModel;
@@ -71,10 +71,10 @@ class MyAiAgentControllerTests {
                 .andExpect(header().exists(MyAiAgentController.REPORT_ID_HEADER))
                 .andReturn().getResponse().getHeader(MyAiAgentController.REPORT_ID_HEADER);
 
-        SavedReport saved = reports.findById(Long.valueOf(id)).orElseThrow();
+        AnalysisReport saved = reports.findById(Long.valueOf(id)).orElseThrow();
         assertThat(saved.getUserId()).isEqualTo(7L);
         assertThat(saved.getCompany()).isEqualTo("Airbus");
-        assertThat(saved.getMarkdown()).isEqualTo("# Airbus report");
+        assertThat(saved.getContent()).isEqualTo("# Airbus report");
     }
 
     @Test

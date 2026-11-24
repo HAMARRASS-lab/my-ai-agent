@@ -189,34 +189,6 @@
   }
   .ticker b { color: var(--green); font-weight: 600; margin-right: 6px; }
   .ticker:hover { border-color: var(--green); background: var(--green-dim); }
-  #history-btn { margin-left: auto; }
-
-  /* Saved reports list */
-  .history-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 0 20px 0 0;
-    border-bottom: 1px solid var(--line);
-  }
-  .history-row:hover { background: var(--panel-2); }
-  .history-open {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    align-items: baseline;
-    gap: 14px;
-    border: none;
-    background: transparent;
-    color: var(--text);
-    padding: 13px 20px;
-    text-align: left;
-  }
-  .history-open b { color: var(--green); font-weight: 500; overflow-wrap: anywhere; }
-  .history-open span { color: var(--muted); font-size: 12px; white-space: nowrap; }
-  .history-open:hover b { text-decoration: underline; text-underline-offset: 3px; }
-  .ghost.danger:hover { color: var(--red); border-color: var(--red); }
-
   /* Output area */
   #result { min-height: 320px; }
   .idle {
@@ -408,6 +380,35 @@
     text-underline-offset: 3px;
   }
   .statusbar .recent-item:hover { color: var(--green); }
+  /* Saved reports archive */
+  .archive { border-top: 1px solid var(--line); }
+  .archive-list { list-style: none; margin: 0; padding: 0; }
+  .archive-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .archive-row:last-child { border-bottom: none; }
+  .archive-open {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    gap: 14px;
+    align-items: baseline;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+  }
+  .archive-open .name { color: var(--amber); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .archive-open .when { color: var(--muted); font-size: 11px; white-space: nowrap; }
+  .archive-open:hover .name { color: var(--green); }
+  .archive-empty { padding: 16px 20px; color: var(--muted); }
+  .ghost.danger:hover { color: var(--red); border-color: var(--red); }
   .disclaimer { text-align: center; color: var(--muted); font-size: 11px; margin-top: 16px; letter-spacing: 0.04em; }
 
   [hidden] { display: none !important; }
@@ -558,7 +559,6 @@
           <button type="button" class="ticker" data-q="LVMH"><b>MC</b>LVMH</button>
           <button type="button" class="ticker" data-q="Toyota"><b>TM</b>Toyota</button>
           <button type="button" class="ticker" data-q="Airbus"><b>AIR</b>Airbus</button>
-          <button type="button" class="ghost" id="history-btn">HISTORY</button>
         </div>
       </section>
 
@@ -570,10 +570,15 @@
           <span class="cursor"></span>
         </div>
       </main>
+
+      <section class="archive" id="archive">
+        <div class="section-head"><span class="sym">ARCHIVE</span><span id="archive-count">SAVED REPORTS</span></div>
+        <ul class="archive-list" id="archive-list"><li class="archive-empty">Loading…</li></ul>
+      </section>
       </div>
 
       <footer class="statusbar">
-        <span>HISTORY:</span>
+        <span>SAVED:</span>
         <span id="recent-list">—</span>
         <span class="spacer"></span>
         <span>SRC: YAHOO + WIKIDATA + LLM</span>
@@ -604,6 +609,9 @@
     const userName = document.getElementById('user-name');
     const logoutBtn = document.getElementById('logout-btn');
 
+    const archiveList = document.getElementById('archive-list');
+    const archiveCount = document.getElementById('archive-count');
+    let savedReports = [];
     const STEPS = [
       'resolving company identity via wikidata',
       'fetching country / sector / founding year',
@@ -719,57 +727,57 @@
       return html;
     }
 
-    // --- Saved reports (stored on the server per user) ---
-
-    let savedReports = [];
-
-    function formatDate(iso) {
-      return new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+    function formatWhen(iso) {
+      const d = new Date(iso);
+      const sameDay = d.toDateString() === new Date().toDateString();
+      return sameDay
+        ? d.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' })
+        : d.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
     }
 
-    async function loadHistory() {
+    async function loadReports() {
       try {
         const res = await fetch('/api/reports');
+        if (res.status === 401) { showAuth('Your session has expired. Please log in again.'); return; }
         savedReports = res.ok ? await res.json() : [];
       } catch {
         savedReports = [];
       }
-      renderRecent();
+      renderReports();
     }
 
-    // Footer shows the last 5 distinct companies; each opens its newest saved report.
-    function renderRecent() {
-      const seen = new Set();
-      const latest = savedReports.filter(r => {
-        const key = r.company.toLowerCase();
-        return !seen.has(key) && seen.add(key);
-      }).slice(0, 5);
-      recentList.innerHTML = latest.length
-        ? latest.map(r => `<button type="button" class="recent-item" data-report="${r.id}" title="Saved ${escapeHtml(formatDate(r.createdAt))}">${escapeHtml(r.company)}</button>`).join(' · ')
+    function renderReports() {
+      recentList.innerHTML = savedReports.length
+        ? savedReports.slice(0, 5).map(r =>
+            `<button type="button" class="recent-item" data-report="${r.id}">${escapeHtml(r.company)}</button>`).join(' · ')
         : '—';
-    }
-
-    function showHistory() {
-      const rows = savedReports.map(r => `
-        <div class="history-row">
-          <button type="button" class="history-open" data-report="${r.id}"><b>${escapeHtml(r.company)}</b><span>${escapeHtml(formatDate(r.createdAt))}</span></button>
-          <button type="button" class="ghost" data-q="${escapeHtml(r.company)}">RE-RUN</button>
-          <button type="button" class="ghost danger" data-delete="${r.id}">DELETE</button>
-        </div>`).join('');
-      result.innerHTML = `
-        <div class="section-head"><span class="sym">HISTORY</span><span>${savedReports.length} SAVED REPORT${savedReports.length === 1 ? '' : 'S'}</span></div>
-        ${rows || '<div class="idle">No saved reports yet. Run a company lookup and it will be saved here.</div>'}`;
+      archiveCount.textContent = `${savedReports.length} SAVED REPORT${savedReports.length === 1 ? '' : 'S'}`;
+      archiveList.innerHTML = savedReports.length
+        ? savedReports.map(r => `
+            <li class="archive-row">
+              <button type="button" class="archive-open" data-report="${r.id}">
+                <span class="name">${escapeHtml(r.company.toUpperCase())}</span>
+                <span class="when">${escapeHtml(formatWhen(r.createdAt))} · ${(r.durationMs / 1000).toFixed(1)}s</span>
+              </button>
+              <button type="button" class="ghost danger" data-delete="${r.id}" aria-label="Delete report for ${escapeHtml(r.company)}">DELETE</button>
+            </li>`).join('')
+        : '<li class="archive-empty">No saved reports yet. Every analysis you run is kept here.</li>';
     }
 
     async function openReport(id) {
       if (button.disabled) return;
       try {
-        const res = await fetch(`/api/reports/${id}`);
+        const res = await fetch('/api/reports/' + encodeURIComponent(id));
         if (res.status === 401) { showAuth('Your session has expired. Please log in again.'); return; }
-        if (!res.ok) { showError(await errorMessage(res)); return; }
+        if (!res.ok) { showError(await errorMessage(res)); loadReports(); return; }
         const report = await res.json();
         input.value = report.company;
-        showDossier(report.company, report.markdown, `SAVED · ${formatDate(report.createdAt)}`, true);
+        showDossier(report.company, report.content, {
+          id: report.id,
+          label: `SAVED ${formatWhen(report.createdAt)}`,
+          saved: true,
+        });
+        result.scrollIntoView({ block: 'start', behavior: 'smooth' });
       } catch {
         showError('Could not reach the server. Is it running?');
       }
@@ -779,16 +787,21 @@
       const report = savedReports.find(r => String(r.id) === String(id));
       if (!confirm(`Delete the saved report for ${report ? report.company : 'this company'}?`)) return;
       try {
-        const res = await fetch(`/api/reports/${id}`, { method: 'DELETE' });
+        const res = await fetch('/api/reports/' + encodeURIComponent(id), { method: 'DELETE' });
         if (res.status === 401) { showAuth('Your session has expired. Please log in again.'); return; }
         if (!res.ok && res.status !== 404) { showError(await errorMessage(res)); return; }
+        // Clear the open report if it was the one deleted.
+        const open = result.querySelector('[data-open-report]');
+        if (open && open.dataset.openReport === String(id)) showIdle();
       } catch {
         showError('Could not reach the server. Is it running?');
         return;
       }
-      await loadHistory();
-      showHistory();
+      loadReports();
     }
+
+    const IDLE_HTML = result.innerHTML;
+    function showIdle() { result.innerHTML = IDLE_HTML; }
 
     function logLine(log, tag, cls, text) {
       const div = document.createElement('div');
@@ -817,8 +830,7 @@
       }, 2000);
     }
 
-    // label goes in the header (run time or saved date); saved reports also get a RE-RUN button for fresh numbers.
-    function showDossier(company, markdown, label, saved) {
+    function showDossier(company, markdown, meta) {
       const { facts, rest } = extractFacts(markdown);
       const factsHtml = facts.length
         ? `<div class="facts">${facts.map(([k, v]) =>
@@ -826,11 +838,11 @@
         : '';
 
       result.innerHTML = `
-        <div class="section-head">
+        <div class="section-head"${meta.id ? ` data-open-report="${meta.id}"` : ''}>
           <span class="sym">${escapeHtml(company.toUpperCase())}</span>
-          <span>DOSSIER · ${escapeHtml(label)}</span>
+          <span>DOSSIER · ${escapeHtml(meta.label)}</span>
           <span class="spacer"></span>
-          ${saved ? `<button type="button" class="ghost" data-q="${escapeHtml(company)}">RE-RUN</button>` : ''}
+          ${meta.saved ? `<button type="button" class="ghost" data-q="${escapeHtml(company)}" title="Run a fresh analysis">RE-RUN</button>` : ''}
           <button type="button" class="ghost" id="copy-btn">COPY MD</button>
         </div>
         ${factsHtml}
@@ -879,8 +891,8 @@
         }
 
         setStatus('', 'READY');
-        showDossier(company, text, `${seconds}s`, false);
-        loadHistory();
+        showDossier(company, text, { id: res.headers.get('X-Report-Id'), label: `${seconds}s · SAVED` });
+        loadReports();
       } catch (err) {
         setStatus('down', 'OFFLINE');
         showError('Could not reach the server. Is it running?');
@@ -903,17 +915,13 @@
       search(input.value);
     });
 
-    // Tickers and RE-RUN buttons trigger a search; history entries open or delete a saved report.
+    // Ticker and re-run buttons trigger a search; saved-report entries open or delete a stored report.
     document.addEventListener('click', (e) => {
       const target = e.target.closest('[data-q], [data-report], [data-delete]');
       if (!target) return;
-      if (target.dataset.q) search(target.dataset.q);
+      if (target.dataset.delete) deleteReport(target.dataset.delete);
       else if (target.dataset.report) openReport(target.dataset.report);
-      else deleteReport(target.dataset.delete);
-    });
-
-    document.getElementById('history-btn').addEventListener('click', () => {
-      if (!button.disabled) showHistory();
+      else search(target.dataset.q);
     });
 
     function tick() { clock.textContent = timestamp(); }
@@ -970,8 +978,9 @@
       userName.textContent = user.username;
       userName.title = `${user.fullName} <${user.email}>`;
       setStatus('', 'READY');
+      showIdle();
+      loadReports();
       input.focus();
-      loadHistory();
     }
 
     // Spring returns validation errors as ProblemDetail JSON; fall back to plain text.
@@ -1015,7 +1024,7 @@
     logoutBtn.addEventListener('click', async () => {
       try { await fetch('/api/auth/logout', { method: 'POST' }); } catch { /* logged out locally anyway */ }
       savedReports = [];
-      renderRecent();
+      renderReports();
       setAuthMode('login');
       showAuth();
     });
